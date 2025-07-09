@@ -259,3 +259,178 @@ Validators.pattern(
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 );
 ```
+
+10. ahora añadiremos mensajes de error si el campo es invalido.
+
+```html
+@if (email.invalid && email.touched) {
+<p>Email is required</p>
+}
+```
+
+> `touched` lo usamos para que el mensaje de error solo salga si almenos el usuario pincho una vez ese campo.
+
+- Esto solo seria para casos con un unico validador.
+
+11. en caso de varios simplemente usamos `hasError` y el nombre del validador junto con los `else if` necesarios.
+
+```html
+<form
+  [formGroup]="loginForm"
+  (submit)="handlesubmit()"
+  class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-md space-y-6"
+>
+  <fieldset class="flex flex-col space-y-2">
+    <label for="login-email" class="text-sm font-medium text-gray-700"
+      >Email:</label
+    >
+    <input
+      type="text"
+      id="login-email"
+      formControlName="email"
+      class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+    @if (email.hasError("required") && email.touched) {
+    <p>Email is required</p>
+    } @else if (email.hasError("email") && email.touched) {
+    <p>Invalid email address</p>
+    }
+  </fieldset>
+  <fieldset class="flex flex-col space-y-2">
+    <label for="login-password" class="text-sm font-medium text-gray-700"
+      >Password:</label
+    >
+    <input
+      type="password"
+      id="login-password"
+      formControlName="password"
+      class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+    @if (password.hasError("required") && password.touched) {
+    <p>Password is required</p>
+    } @else if (password.hasError("minlength") && password.touched) {
+    <p>Password must be at least 6 characters long</p>
+    } @else if (password.hasError("maxlength") && password.touched) {
+    <p>Password cannot be more than 32 characters long</p>
+    } @else if (password.hasError("pattern") && password.touched) {
+    <p>Password must contain at least one letter and one number</p>
+    }
+  </fieldset>
+  <button
+    [disabled]="loginForm.invalid"
+    class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors duration-200"
+  >
+    Login
+  </button>
+</form>
+```
+
+11. Por ultim o para limpiar el formulario des pues de envia tenemos :
+
+```ts
+this.loginForm.reset(); // Resetea el formulario después de enviar
+```
+
+## Codigo Completo
+
+```html
+<form
+  [formGroup]="loginForm"
+  (submit)="handlesubmit()"
+  class="max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-md space-y-6"
+>
+  <fieldset class="flex flex-col space-y-2">
+    <label for="login-email" class="text-sm font-medium text-gray-700"
+      >Email:</label
+    >
+    <input
+      type="text"
+      id="login-email"
+      formControlName="email"
+      class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+    @if (email.hasError("required") && email.touched) {
+    <p class="text-sm text-red-600 mt-1">Email is required</p>
+    } @else if (email.hasError("email") && email.touched) {
+    <p class="text-sm text-red-600 mt-1">Invalid email address</p>
+    }
+  </fieldset>
+
+  <fieldset class="flex flex-col space-y-2">
+    <label for="login-password" class="text-sm font-medium text-gray-700"
+      >Password:</label
+    >
+    <input
+      type="password"
+      id="login-password"
+      formControlName="password"
+      class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    />
+    @if (password.hasError("required") && password.touched) {
+    <p class="text-sm text-red-600 mt-1">Password is required</p>
+    } @else if (password.hasError("minlength") && password.touched) {
+    <p class="text-sm text-red-600 mt-1">
+      Password must be at least 6 characters long
+    </p>
+    } @else if (password.hasError("maxlength") && password.touched) {
+    <p class="text-sm text-red-600 mt-1">
+      Password cannot be more than 32 characters long
+    </p>
+    } @else if (password.hasError("pattern") && password.touched) {
+    <p class="text-sm text-red-600 mt-1">
+      Password must contain at least one letter and one number
+    </p>
+    }
+  </fieldset>
+
+  <button
+    [disabled]="loginForm.invalid"
+    class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    Login
+  </button>
+</form>
+```
+
+```ts
+import { Component } from "@angular/core";
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from "@angular/forms";
+
+@Component({
+  selector: "app-login",
+  imports: [ReactiveFormsModule],
+  templateUrl: "./login.html",
+  styleUrl: "./login.css",
+})
+export class Login {
+  loginForm: FormGroup; //variable para el formulario de inicio de sesión
+  email: FormControl; //variable para el control de email
+  password: FormControl; //variable para el control de contraseña
+
+  constructor() {
+    this.email = new FormControl("", [Validators.required, Validators.email]);
+    this.password = new FormControl("", [
+      Validators.required,
+      Validators.minLength(6), // Mínimo 6 caracteres (o el que desees)
+      Validators.maxLength(32), // Máximo 32 caracteres (opcional)
+      Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]+$/),
+      // Al menos una letra y un número
+    ]);
+
+    this.loginForm = new FormGroup({
+      email: this.email,
+      password: this.password,
+    });
+  }
+
+  handlesubmit(): void {
+    console.log(this.loginForm.value);
+    this.loginForm.reset(); // Resetea el formulario después de enviar
+  }
+}
+```
